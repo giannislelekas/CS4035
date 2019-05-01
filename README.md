@@ -1,7 +1,7 @@
 # CS4035
 Cyber Data Analytics CS4035, 2018-2019
 Authors:
-  - Kostantinos Chronas
+  - Kostantinos Chronas, 4923162
   - Ioannis Lelekas, 4742559
 
 ## Lab 1: Fraud Detection
