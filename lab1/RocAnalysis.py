@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve, auc, confusion_matrix, precision_score, recall_score, f1_score
 from PlotConfusionMatrixV2 import *
 
+from imblearn.under_sampling import RandomUnderSampler
+
 
 def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, sm = None):
     # vectors for storing True Negatives, False Positives, False-Negatives and True-Positives
@@ -21,11 +23,15 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
     AUC = []
     mean_FPR = np.linspace(0,1,100)
 
+    # us = RandomUnderSampler(sampling_strategy = 0.9)
+
     i = 0
-    plt.figure(figsize = (8, 10))
+    if plot_ROC:
+        plt.figure(figsize = (8, 10))
     for train_index, test_index in cv.split(X, y):
         if sm != None:
             X_train, y_train = sm.fit_resample(X[train_index], y[train_index])
+            # X_train, y_train = us.fit_resample(X_train, y_train)
         else:
             X_train, y_train = X[train_index], y[train_index]
 
@@ -60,15 +66,16 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
 
     mean_AUC = auc(mean_FPR, mean_TPR)
     std_AUC = np.std(AUC)
-    print("AUC: ", mean_AUC, " +- ", std_AUC)
+    # print("AUC: ", mean_AUC, " +- ", std_AUC)
 
     mean_PR = np.mean(PR)
     mean_R = np.mean(R)
     mean_F1 = np.mean(F1)
-    print("F1: ", np.mean(F1), " +- ", np.std(F1))
+    std_F1 = np.std(F1)
+    # print("F1: ", np.mean(F1), " +- ", np.std(F1))
 
     if plot_ROC:
-        plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+        plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='k',
              label='Chance', alpha=.8)
 
         plt.plot(mean_FPR, mean_TPR, color='b',
@@ -81,7 +88,7 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
         plt.ylim([-0.05, 1.05])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic example')
+        plt.title('Receiver operating characteristic curve')
         plt.legend(loc="lower right")
         plt.show()
 
@@ -93,4 +100,4 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
         plt.figure()
         plot_confusion_matrix(cm, classes = ['Non-Fraud', 'Fraud'], normalize = normalize_cm)
 
-    return mean_TPR, std_TPR, mean_AUC, std_AUC, cm
+    return mean_TPR, std_TPR, mean_AUC, std_AUC, mean_F1, std_F1, cm
