@@ -6,7 +6,7 @@ Authors:
 
 ## Lab 1: Fraud Detection
 - `Lab1.ipynb`: pipeline for the fraud detection task of Lab 1,
-- `Bonus-Lab1.ipynb`: pipeline for the bonus task of Lab 1,
+- `Lab1-Bonus.ipynb`: pipeline for the bonus task of Lab 1,
 - `HelperFunctions.py`: implementation of helper functions for conducting ROC analysis and plotting the aggregate confusion matrix
 
 ## Lab 2: Anomaly detection
