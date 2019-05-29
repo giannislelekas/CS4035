@@ -67,25 +67,3 @@ def extract_alarm_regions(test_sax, train_prof):
         alarm_regions.append(test_sax[i])
     alarm_regions = [x for sublist in alarm_regions for x in sublist]
     return alarm_regions
-
-
-def evaluate(y, alarm_regions):
-    intersect = np.isin(alarm_regions, np.where(y==1))
-    TP = np.sum(intersect)
-    FP = np.sum(intersect==0)
-    return TP, FP, intersect
-
-
-def plot(y, alarm_regions, intersect):
-    plt.figure(figsize=(20,10))
-    ypred = np.zeros_like(y)
-    ypred[alarm_regions] = 1
-
-    ind = np.array(alarm_regions)[intersect]
-    Y = np.zeros_like(y)
-    Y[ind] = 1
-    plt.fill(Y, facecolor='r', alpha=0.5)
-
-    plt.plot(y, color = 'r', label='actual')
-    plt.plot(ypred, color = 'k', label='predicted', alpha=0.4)
-    plt.legend()
