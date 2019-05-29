@@ -15,24 +15,22 @@ OUTPUT: optimal_p, optimal_q: optimal order extracted,
         mean_resids, std_resids: mean values and standard deviations for the residuals
                                  from each model
 '''
-def find_arma_order(signal, p, q, threshold):
+def find_arma_order(signal, p, q):
     AIC = np.zeros((len(p), len(q)))
     mean_resids = np.zeros_like(AIC)
     std_resids = np.zeros_like(AIC)
-    optimal_AIC = 100000
     for i in range(len(p)):
         for j in range(len(q)):
             try:
                 model = ARMA(endog=signal, order=(p[i], q[j])).fit(disp=False)
                 AIC[i,j] = model.aic
-                if AIC[i,j] <= optimal_AIC-threshold:
-                     optimal_p = i
-                     optimal_q = j
-                     optimal_AIC = AIC[i,j]
                 mean_resids[i,j] = np.mean(model.resid)
                 std_resids[i,j] = np.std(model.resid)
             except:
                 print(f"Failed to fit ARMA model {(i, j)}")
+    ind = np.argmin(AIC)
+    ind_p, ind_q = np.unravel_index(ind, AIC.shape)
+    optimal_p, optimal_q = p[ind_p], q[ind_q]
 
     return optimal_p, optimal_q, AIC, mean_resids, std_resids
 
@@ -72,6 +70,39 @@ def predict(train_signal, test_signal, model_p, model_q, file=None, print_output
 
 
 
+def predictS(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
+
+    history = list(train_signal)
+    predictions = []
+
+    model_1 = SARIMAX(history, order=(model_p, 0, model_q), enforce_stationarity=False, enforce_invertibility=False)
+    res = model_1.fit()
+    i = 0
+    for t in test_signal:
+        # model_2 = SARIMAX(history, order=(model_p, 0, model_q))
+        model_2 = SARIMAX(test_signal[:i], order=(model_p, 0, model_q), enforce_stationarity=False, enforce_invertibility=False)
+        res2 = model_2.filter(res.params)
+        pred = res2.forecast(1)
+
+        if print_output:
+            print(f"Actual value: {t}, predicted: {pred}, abs: {np.abs(t-pred)}")
+        predictions.append(pred)
+        history.append(t)
+        i = i+1
+    predictions = np.array([x for sublist in predictions for x in sublist])
+
+    # Evaluate the predictions
+    resid = test_signal - predictions
+    MFE = np.mean(resid)
+    MAE = np.mean(np.abs(resid))
+    MAPE = np.round(np.mean(np.abs(resid/(test_signal + 1e-16))), 5 )
+
+    if file != None:
+        np.save(file, predictions)
+    return predictions, MFE, MAE, MAPE
+
+
+
 def predict_mini(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
 
     history = list(train_signal)
@@ -82,7 +113,10 @@ def predict_mini(train_signal, test_signal, model_p, model_q, file=None, print_o
     predictions = []
     residuals = list(model.resid)
 
+
     for t in test_signal:
+
+        # mu = np.mean(history)
 
         if len(ar_coef) != 0 and len(ma_coef)!=0:
             pred = sum(ar_coef * history[-model_p:]) + sum(ma_coef * residuals[-model_q:])

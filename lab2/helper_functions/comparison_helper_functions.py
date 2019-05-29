@@ -151,8 +151,8 @@ def plot(test_labels, predicted_labels):
     Y = np.zeros_like(test_labels)
     Y[ind] = 1
 
-    plt.plot(test_labels, color = 'g', label='actual')
     plt.plot(predicted_labels, color = 'r', label='predicted', alpha=0.4)
+    plt.plot(test_labels, color = 'g', label='actual')
     plt.fill(Y, facecolor='g', alpha=1)
 
     plt.xlabel("sample index")
