@@ -1,5 +1,7 @@
 import numpy as np
 from statsmodels.tsa.arima_model import ARMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+
 
 '''
 Function to conduct exhaustive grid search for determining the optimal order (p,q)
@@ -13,19 +15,25 @@ OUTPUT: optimal_p, optimal_q: optimal order extracted,
         mean_resids, std_resids: mean values and standard deviations for the residuals
                                  from each model
 '''
-def find_arma_order(signal, p, q):
+def find_arma_order(signal, p, q, threshold):
     AIC = np.zeros((len(p), len(q)))
     mean_resids = np.zeros_like(AIC)
     std_resids = np.zeros_like(AIC)
+    optimal_AIC = 100000
     for i in range(len(p)):
         for j in range(len(q)):
-            model = ARMA(endog=signal, order=(p[i], q[j])).fit(disp=False)
-            AIC[i,j] = model.aic
-            mean_resids[i,j] = np.mean(model.resid)
-            std_resids[i,j] = np.std(model.resid)
-    ind = np.unravel_index(np.argmin(AIC), shape=AIC.shape)
-    optimal_p = ind[0]
-    optimal_q = ind[1]
+            try:
+                model = ARMA(endog=signal, order=(p[i], q[j])).fit(disp=False)
+                AIC[i,j] = model.aic
+                if AIC[i,j] <= optimal_AIC-threshold:
+                     optimal_p = i
+                     optimal_q = j
+                     optimal_AIC = AIC[i,j]
+                mean_resids[i,j] = np.mean(model.resid)
+                std_resids[i,j] = np.std(model.resid)
+            except:
+                print(f"Failed to fit ARMA model {(i, j)}")
+
     return optimal_p, optimal_q, AIC, mean_resids, std_resids
 
 
@@ -38,7 +46,7 @@ OUTPUT: predictions: extracted predictions,
         MFE: Mean Forecast error
         MAE: Mean Absolute error
 '''
-def predict(train_signal, test_signal, model_p, model_q, file=None):
+def predict(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
 
     history = list(train_signal)
     predictions = []
@@ -47,8 +55,8 @@ def predict(train_signal, test_signal, model_p, model_q, file=None):
         model_fit = model.fit(disp=False)
         pred = model_fit.forecast()[0]
 
-        # Uncomment if you want to see one-step prediction
-#         print(f"Actual value: {t}, predicted: {pred}, abs: {np.abs(t-pred)}")
+        if print_output:
+            print(f"Actual value: {t}, predicted: {pred}, abs: {np.abs(t-pred)}")
         predictions.append(pred)
         history.append(t)
     predictions = np.array([x for sublist in predictions for x in sublist])
@@ -63,6 +71,49 @@ def predict(train_signal, test_signal, model_p, model_q, file=None):
     return predictions, MFE, MAE
 
 
+
+def predict_mini(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
+
+    history = list(train_signal)
+    model = ARMA(history, order=(model_p, model_q)).fit()
+    ar_coef = model.arparams
+    ma_coef = model.maparams
+
+    predictions = []
+    residuals = list(model.resid)
+
+    for t in test_signal:
+
+        if len(ar_coef) != 0 and len(ma_coef)!=0:
+            pred = sum(ar_coef * history[-model_p:]) + sum(ma_coef * residuals[-model_q:])
+        elif len(ar_coef) == 0 and len(ma_coef)!=0:
+            pred = sum(ma_coef * residuals[-model_q:])
+        elif len(ar_coef) != 0 and len(ma_coef)==0:
+            pred = sum(ar_coef * history[-model_p:])
+        else:
+            print("ARMA (0,0) given")
+            return
+
+        if print_output:
+            print(f"Actual value: {t}, predicted: {pred}, abs: {np.abs(t-pred)}")
+        predictions.append(pred)
+        history.append(t)
+        residuals.append(t-pred)
+    # predictions = [x for sublist in predictions for x in sublist]
+    predictions = np.array(predictions)
+
+    # Evaluate the predictions
+    resid = test_signal - predictions
+    MFE = np.mean(resid)
+    MAE = np.mean(np.abs(resid/predictions))
+
+    if file != None:
+        np.save(file, predictions)
+    return predictions, MFE, MAE
+
+
+
+
 '''
 This function extracts the threshold based on the maximum residual on the training signal.
 INPUT:  train_signal: time-series signal on which to fit the ARMA model,
@@ -74,8 +125,12 @@ def determine_threshold(train_signal, model_p, model_q, multiplier=1):
     model = ARMA(train_signal, order=(model_p, model_q))
     model_fit = model.fit()
 
-    threshold = multiplier * np.max(np.abs(model_fit.resid))
-    return threshold
+    mean_res = np.mean(model_fit.resid)
+    std_res = np.std(model_fit.resid)
+    threshold_up = mean_res + multiplier*std_res
+    threshold_down = mean_res - multiplier*std_res
+
+    return threshold_up, threshold_down
 
 
 '''
@@ -85,7 +140,8 @@ INPUT:  test_signal, predictions: true and predicted values of the signal
         threshold: set threshold for raising an alarm
 OUTPUT: alarm_ind: indices of the test signal where alarm has occured
 '''
-def extract_alarm_indices(test_signal, predictions, threshold):
-    resid = np.abs(test_signal - predictions)
-    alarm_ind = resid>threshold
+def extract_alarm_indices(test_signal, predictions, threshold_up, threshold_down):
+    resid = test_signal - predictions
+    alarm_ind = np.logical_or(resid > threshold_up, resid<threshold_down)
+
     return alarm_ind
