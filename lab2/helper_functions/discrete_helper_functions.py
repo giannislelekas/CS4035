@@ -45,6 +45,7 @@ def optimal_parameters(train_signal, train_labels, test_signal, test_labels, win
 
                 s = compute_s(test_labels, predicted_labels, gamma)
                 if s > max_S:
+                    max_S = s
                     optimal_labels = predicted_labels
                 S[w,p,v] = s
 
@@ -73,20 +74,6 @@ def discretize(raw_signal, window_size, paa_segments, alphabet_size):
 
     return discrete_signal
 
-
-
-def discretizeV2(raw_signal, window_size, paa_segments):
-    discrete_signal = []
-    num = window_size//paa_segments
-
-    for i in range(0, len(signal), window_size):
-        for ngram in list(train_sax.keys()):
-            if i in train_sax[ngram]:
-                for n in range(8):
-                    discrete_signal.append(np.tile(ngram[n], num))
-
-    discrete_signal = [x for sublist in discrete_signal for x in sublist]
-    return discrete_signal
 
 
 
