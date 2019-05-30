@@ -37,6 +37,7 @@ def attack_detection(test_labels):
                 dur = 0
     return num_attacks, attack_start, attack_duration
 
+
 '''
 This function estimates the time when an attack was detected. The time-to-detect ttd is
 an integer in range [0, attack_duration[i]], for each attack event i. In case an attack

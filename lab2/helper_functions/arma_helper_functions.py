@@ -43,6 +43,7 @@ INPUT:  train_signal, test_signal: train and test time-series to fit and predict
 OUTPUT: predictions: extracted predictions,
         MFE: Mean Forecast error
         MAE: Mean Absolute error
+        MAPE: Mean Absolute Percentage Error
 '''
 def predict(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
 
@@ -63,13 +64,24 @@ def predict(train_signal, test_signal, model_p, model_q, file=None, print_output
     resid = test_signal - predictions
     MFE = np.mean(resid)
     MAE = np.mean(np.abs(resid/predictions))
+    MAPE = np.round(np.mean(np.abs(resid/(test_signal + 1e-16))), 5 )
 
     if file != None:
         np.save(file, predictions)
-    return predictions, MFE, MAE
+    return predictions, MFE, MAE, MAPE
 
 
-
+'''
+Faster version for single-step forecast, using SARIMAX of the same order, without the need for
+refitting after each iteration.
+INPUT:  train_signal, test_signal: train and test time-series to fit and predict respectively
+        model_p, model_q: order of the ARMA model
+        file: provide filepath if you want to store the extracted predictions in an '.npy' file
+OUTPUT: predictions: extracted predictions,
+        MFE: Mean Forecast error
+        MAE: Mean Absolute error
+        MAPE: Mean Absolute Percentage Error
+'''
 def predictS(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
 
     history = list(train_signal)
@@ -103,57 +115,14 @@ def predictS(train_signal, test_signal, model_p, model_q, file=None, print_outpu
 
 
 
-def predict_mini(train_signal, test_signal, model_p, model_q, file=None, print_output=False):
-
-    history = list(train_signal)
-    model = ARMA(history, order=(model_p, model_q)).fit()
-    ar_coef = model.arparams
-    ma_coef = model.maparams
-
-    predictions = []
-    residuals = list(model.resid)
-
-
-    for t in test_signal:
-
-        # mu = np.mean(history)
-
-        if len(ar_coef) != 0 and len(ma_coef)!=0:
-            pred = sum(ar_coef * history[-model_p:]) + sum(ma_coef * residuals[-model_q:])
-        elif len(ar_coef) == 0 and len(ma_coef)!=0:
-            pred = sum(ma_coef * residuals[-model_q:])
-        elif len(ar_coef) != 0 and len(ma_coef)==0:
-            pred = sum(ar_coef * history[-model_p:])
-        else:
-            print("ARMA (0,0) given")
-            return
-
-        if print_output:
-            print(f"Actual value: {t}, predicted: {pred}, abs: {np.abs(t-pred)}")
-        predictions.append(pred)
-        history.append(t)
-        residuals.append(t-pred)
-    # predictions = [x for sublist in predictions for x in sublist]
-    predictions = np.array(predictions)
-
-    # Evaluate the predictions
-    resid = test_signal - predictions
-    MFE = np.mean(resid)
-    MAE = np.mean(np.abs(resid/predictions))
-
-    if file != None:
-        np.save(file, predictions)
-    return predictions, MFE, MAE
-
-
-
 
 '''
-This function extracts the threshold based on the maximum residual on the training signal.
+This function extracts the threshold based on multi*sigma, where multi a float number and
+sigma standard deviation from the mean residual extracted from the training signal.
 INPUT:  train_signal: time-series signal on which to fit the ARMA model,
         model_p, model_q: order of the ARMA model,
         multiplier: value to multiply the maximum residual (to give some room for not extracting FP)
-OUTPUT: threshold: extracted threshold
+OUTPUT: threshold_up, threshold_down: extracted threshold
 '''
 def determine_threshold(train_signal, model_p, model_q, multiplier=1):
     model = ARMA(train_signal, order=(model_p, model_q))
@@ -168,8 +137,8 @@ def determine_threshold(train_signal, model_p, model_q, multiplier=1):
 
 
 '''
-This function extracts the indices where an alarm has occured, based on the difference
-between the test signal and the predicted values, compared to the given threshold.
+This function extracts the indices where an alarm has occured, if the residuals in the test
+signal is outside the range [threshold_down, threshold_ip]
 INPUT:  test_signal, predictions: true and predicted values of the signal
         threshold: set threshold for raising an alarm
 OUTPUT: alarm_ind: indices of the test signal where alarm has occured
