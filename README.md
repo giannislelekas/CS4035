@@ -10,6 +10,17 @@ Authors:
 - `HelperFunctions.py`: implementation of helper functions for conducting ROC analysis and plotting the aggregate confusion matrix
 
 ## Lab 2: Anomaly detection
+- `Familiarization Task.ipynb`: Data importing and preprocessing; simple AR(1) model on `L_T1`
+- `ARMA Task.ipynb`: ARMA models for sensors `L_T1`, `L_T2`, `L_T4`, `L_T7`, `F_PU1` and `F_PU2`
+- `Discrete Task.ipynb`: discrete models (SAX via sliding window) for the same sensors
+- `PCA Task.ipynb`: PCA method for outlier detection
+- `data/`: containing the original .csv files, along with stored data necessary for running tasks
+- `helper_functions/`:
+  - `arma_helper_functions`
+  - `discrete_helper_functions`
+  - `pca_helper_functions`
+  - `comparison_helper_functions`
+
 ## Lab 3: Network traffic
 
 ## For dear reviewers:
