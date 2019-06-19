@@ -28,4 +28,4 @@ def extract_code(values):
         for j in range(values.shape[1]):
             code[i] = code[i] + values[i,j] * s/M[j]
             s = s / M[j]
-    return code, M
+    return code.astype(int), M
