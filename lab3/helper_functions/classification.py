@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+import datetime
 from sklearn.utils.multiclass import unique_labels
 from matplotlib import pyplot as plt
 from sklearn.metrics import confusion_matrix
@@ -63,7 +65,18 @@ def plot_confusion_matrix(cm, classes,
     fig.tight_layout()
     return ax
 
-def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, sm=None):
+
+def performance_metrics(cm):
+    accuracy = (cm[0,0] + cm[1,1])/np.sum(cm)
+    precision = cm[0,0]/(cm[0,0]+cm[0,1])
+    recall = cm[0,0]/(cm[0,0]+cm[1,0])
+    F1_score = 2*(precision*recall)/(precision+recall)
+
+    return accuracy, precision, recall, F1_score
+
+
+
+def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, attack=False, sm=None):
     # vectors for storing True Positives, False Negatives, False Positives and True negatives
     # respectively per cross-validation run
     num_splits = cv.get_n_splits()
@@ -71,6 +84,7 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
     FN = np.zeros_like(TP)
     FP = np.zeros_like(TP)
     TN = np.zeros_like(TP)
+
 
     # Likewise for storing precision, recall and F1 score respectively extracted,
     # per cross-validation run
@@ -98,13 +112,18 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
 
         # Train the classifier and extract predictions for test samples
         clf.fit(X_train, y_train)
-        y_pred = clf.predict(X[test_index])
 
-        # Uncomment following lines in case you want to see number of TP,FP,TN,FN per run
-        # print("num TP: ", np.sum(np.logical_and(y_pred == 1, y[test_index] == 1)))
-        # print("num FP: ", np.sum(np.logical_and(y_pred ==1, y[test_index] == 0)))
-        # print("num TN: ", np.sum(np.logical_and(y_pred == 0, y[test_index] == 0)))
-        # print("num FN: ", np.sum(np.logical_and(y_pred == 0, y[test_index] == 1)))
+        X_test = X[test_index]
+        feat = [0,4,5]
+        
+        if attack:
+            malicious_ind = np.where(y[test_index]==1)[0][..., np.newaxis]
+            perturb = [120, 200, 2048]
+            perturb = np.tile(perturb, [len(malicious_ind), 1])
+            X_test[malicious_ind, feat] = X_test[malicious_ind, feat] + perturb
+        
+        y_pred = clf.predict(X_test)
+
 
         # Extract confusion matrix, precision, recall and F1 score for the current
         # run of cross validatin
@@ -170,12 +189,6 @@ def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, plot_cm, normalize_cm, s
 
     # Extract the overall confusion matrix, by summing up the values extracted
     # from all runs.
-    cm = np.array([np.sum(TN), np.sum(FP), np.sum(FN), np.sum(TP)])
-    cm = np.reshape(cm, [2, 2], order='C')
-
-    # If TRUE, Plot confusion matrix
-    if plot_cm:
-        plt.figure()
-        plot_confusion_matrix(cm, classes=['Non-Fraud', 'Fraud'], normalize=normalize_cm)
+    cm = np.array([[np.sum(TP), np.sum(FP)], [np.sum(FN), np.sum(TN)]])
 
     return mean_TPR, std_TPR, mean_AUC, std_AUC, mean_F1, std_F1, cm
