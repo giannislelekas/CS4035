@@ -14,7 +14,9 @@ def extract_ngrams(data, n):
 
 def laplace_smoothing(unique_ngrams, ngrams_counts, max_unigram):
 
+#     unigrams = np.unique(unique_ngrams)
     unigrams = np.arange(max_unigram+1)
+#     print(unigrams)
     n = unique_ngrams.shape[1]
 
     comb = list(itertools.product(unigrams, repeat=n))
@@ -25,6 +27,7 @@ def laplace_smoothing(unique_ngrams, ngrams_counts, max_unigram):
         exists = np.sum(np.prod(np.equal(ngram, unique_ngrams), axis=1))
 
         if exists==0:
+#             print(ngram, exists)
             smoothed_ngrams.append(ngram)
             smoothed_count.append(1)
     smoothed_ngrams = np.array(smoothed_ngrams)
