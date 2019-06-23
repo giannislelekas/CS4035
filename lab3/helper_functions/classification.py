@@ -7,6 +7,11 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import roc_curve, auc, confusion_matrix, precision_score, recall_score, f1_score
 
 
+'''
+This function extracts performance metrics based on a given confusion matrix cm.
+INPUT: cm: confusion matrix [[TP, FP], [FN, TN]]
+OUTPUT: accuracy, precision, recall, F1_score: performance metrics
+'''
 def performance_metrics(cm):
     accuracy = (cm[0,0] + cm[1,1])/np.sum(cm)
     precision = cm[0,0]/(cm[0,0]+cm[0,1])
@@ -16,7 +21,25 @@ def performance_metrics(cm):
     return accuracy, precision, recall, F1_score
 
 
-
+'''
+The function roc_analysis implements as expected ROC analysis for a given classifier on
+a provided dataset. Cross-validation is used and statistics are gathered per run, which are
+finally summed up. ROC curves per run are plotted, along with the mean ROC curve from all runs are plotted,
+as well as the aggregated confusion matrix with the statistics extracted from all runs.
+ INPUT:
+   X               : dataset upon which we will use cross-validation
+   y               : correspoding unique_labels
+   cv              : cross-validaton scheme
+   plot_all_ROC    : set to TRUE for plotting ROC curves per cross-validation run
+   plot_ROC        : set to FALSE for no generation of ROC curves
+   attack          : set to TRUE for adversarial attack (BONUS task)
+   sm              : handler for SMOTE
+OUTPUT:
+   mean_TPR, std_TPR   : mean values and correspoding standard deviations for the True Positive Rate
+   mean_AUC, std_AUC   : mean values and correspoding standard deviations for the Area under curve
+   mean_F1, std_F1     : mean values and correspoding standard deviations for the F1 f1_score
+   cm                  : aggregated confusion matrix
+'''
 def roc_analysis(X, y, clf, cv, plot_all_ROC, plot_ROC, attack=False, sm=None):
     # vectors for storing True Positives, False Negatives, False Positives and True negatives
     # respectively per cross-validation run

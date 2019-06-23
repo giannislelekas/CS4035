@@ -1,5 +1,8 @@
 import numpy as np
 
+'''
+Deprecated. We use the next function.
+'''
 # def sample(data, k):
 #     reservoir = []
 #     for t, item in enumerate(data):
@@ -14,7 +17,8 @@ import numpy as np
 
 
 '''
-This function performs the RESERVOIR sampling.
+This function performs the RESERVOIR sampling. Inspired by
+https://en.wikipedia.org/wiki/Reservoir_sampling.
 INPUT: data: the hosts communicating with the infected host,
        k: the size of the reservoir
 OUTPUT: reservoir: resulting sampling
@@ -25,6 +29,7 @@ def sample(data, k):
         if t < k:
             reservoir.append(item)
         else:
+            # t+1 to include t in the range
             m = np.random.randint(0, t+1)
             if m < k:
                 reservoir[m] = item
