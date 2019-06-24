@@ -22,7 +22,7 @@ Authors:
   - `comparison_helper_functions`
 
 ## Lab 3: Network traffic
-**IMPORTANT**: scenario 43 `capture20110811.pcap.netflow.labeled` and 51 `capture20110818.pcap.netflow.labeled` must be downloaded from https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-43/ and https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-51/ respectively and then placed under `./data/`. Then you are ready to review. The modified dataset for scenario 51, `capture20110818.pcap.netflow.labeled.remastered`, for avoiding loading issues is generated and stored in the Flow data discretization task. Please run this notebook before proceeding to Botnet profiling, flow classification and Bonus tasks as they make use of this file.
+**IMPORTANT**: In case datasets are not included in the deliverable, scenario 43 `capture20110811.pcap.netflow.labeled` and 51 `capture20110818.pcap.netflow.labeled` must be downloaded from https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-43/ and https://mcfp.felk.cvut.cz/publicDatasets/CTU-Malware-Capture-Botnet-51/ respectively and then placed under `./data/`. Then you are ready to review. The modified dataset for scenario 51, `capture20110818.pcap.netflow.labeled.remastered`, for avoiding loading issues is generated and stored in the Flow data discretization task. Please run this notebook before proceeding to Botnet profiling, flow classification and Bonus tasks as they make use of this file.
 
 - `Sampling_Task.ipynb`: Reservoir sampling
 - `Sketching_Task.ipynb`: Count-Min sketching
