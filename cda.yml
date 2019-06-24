@@ -88,6 +88,7 @@ dependencies:
     - coverage==4.5.3
     - cython==0.29.7
     - idna==2.8
+    - mmh3==2.5.1
     - more-itertools==7.0.0
     - pluggy==0.11.0
     - pmdarima==1.2.0
