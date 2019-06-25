@@ -68,7 +68,7 @@ def extract_profile(ngrams, ngrams_counts):
     prof = dict(zip(ngrams, ngrams_counts))
     prof_norm = dict(zip(ngrams, ngrams_counts/sum(ngrams_counts)))
 
-    sorted_count = sorted(prof_norm.items(), key=operator.itemgetter(0))
+    sorted_count = sorted(prof_norm.items(), key=operator.itemgetter(1), reverse=True)
 
     return prof, prof_norm, np.array(sorted_count)
 
