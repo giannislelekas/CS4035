@@ -11,7 +11,7 @@ OUTPUT: ngrams: extracted n-grams
 '''
 def extract_ngrams(data, n):
     l = len(data)
-    ngrams = np.zeros((l-n+1,n))
+    ngrams = np.zeros((l-n+1,n), dtype=int)
     for i in range(l-n+1):
         ngrams[i, :] = data[i:i+n]
 

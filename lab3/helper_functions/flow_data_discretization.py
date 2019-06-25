@@ -1,20 +1,6 @@
 import numpy as np
 
 
-# def discretize_ordinal(val, ordinal_val):
-#     if len(val)==1:
-#         disc = val>ordinal_val
-#     else:
-#         disc = []
-#         for v in val:
-#             for i in range(len(ordinal_val)):
-#                 if v<=ordinal_val[i]:
-#                     disc.append(i)
-#                     break
-#                 if i==len(ordinal_val)-1:
-#                     disc.append(i+1)
-#     return np.array(disc)
-
 '''
 This function performs ordinal discretization as done in https://ieeexplore.ieee.org/abstract/document/7987293.
 INPUT: val: values of the feature to be discretized,
@@ -55,7 +41,7 @@ def extract_code(values):
         M[j] = len(np.unique(values[:,j]))
     spacesize = np.prod(M)
 
-    code = np.zeros(values.shape[0])
+    code = np.zeros(values.shape[0], dtype=int)
     for i in range(values.shape[0]):
         s = spacesize
         for j in range(values.shape[1]):
